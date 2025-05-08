@@ -114,8 +114,8 @@ const Quiz: NextPage = () => {
                     "flex items-center space-x-3 p-3 border rounded-md transition-all",
                     "hover:bg-accent/50",
                     selectedOptionValue === index.toString() && !showFeedback ? "border-primary ring-2 ring-primary" : "border-input",
-                    showFeedback && option.isCorrect ? "bg-success/20 border-success text-success-foreground-dark" : "", // Style correct answer after feedback
-                    showFeedback && !option.isCorrect && selectedOptionValue === index.toString() ? "bg-destructive/20 border-destructive text-destructive-foreground-dark" : "" // Style selected incorrect answer
+                    showFeedback && option.isCorrect ? "bg-success/20 border-success text-success" : "", // Style correct answer after feedback
+                    showFeedback && !option.isCorrect && selectedOptionValue === index.toString() ? "bg-destructive/20 border-destructive text-destructive" : "" // Style selected incorrect answer
                  )}
             >
               <RadioGroupItem 
