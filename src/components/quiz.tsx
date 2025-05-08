@@ -1,9 +1,9 @@
 "use client";
 
 import type { NextPage } from 'next';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import type { Question } from '@/lib/types';
 import { quizData } from '@/lib/quiz-data';
-import type { Question, AnswerOption } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -20,17 +20,34 @@ const Quiz: NextPage = () => {
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  const questionTextRef = useRef<HTMLHeadingElement>(null);
+  const quizCompleteHeadingRef = useRef<HTMLHeadingElement>(null);
+  const radioGroupRef = useRef<HTMLDivElement>(null);
+
+
   useEffect(() => {
-    setMounted(true); // Ensure component is mounted before rendering anything relying on client-side state
+    setMounted(true);
   }, []);
 
+  const currentQuestion = quizData[currentQuestionIndex];
+
+  useEffect(() => {
+    if (mounted && !showFeedback && !quizCompleted && currentQuestion) {
+      questionTextRef.current?.focus();
+    }
+  }, [mounted, currentQuestionIndex, showFeedback, quizCompleted, currentQuestion]);
+
+  useEffect(() => {
+    if (mounted && quizCompleted) {
+      quizCompleteHeadingRef.current?.focus();
+    }
+  }, [mounted, quizCompleted]);
+
+
   if (!mounted) {
-    // Render nothing or a loading indicator on the server/during hydration mismatch
     return null; 
   }
   
-  const currentQuestion = quizData[currentQuestionIndex];
-
   const handleOptionChange = (value: string) => {
     setSelectedOptionValue(value);
   };
@@ -82,7 +99,7 @@ const Quiz: NextPage = () => {
   if (quizCompleted) {
     return (
       <div className="text-center p-4 sm:p-6">
-        <h2 className="text-3xl font-semibold mb-4 text-primary">Quiz Completed!</h2>
+        <h2 ref={quizCompleteHeadingRef} tabIndex={-1} className="text-3xl font-semibold mb-4 text-primary">Quiz Completed!</h2>
         <p className="text-xl mb-6">Your final score: <span className="font-bold">{score}</span> out of <span className="font-bold">{quizData.length}</span></p>
         <Button onClick={handleRestartQuiz} size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
           Restart Quiz
@@ -95,14 +112,20 @@ const Quiz: NextPage = () => {
     return <p className="text-center p-4">Loading quiz questions...</p>;
   }
 
+  const questionId = `question-${currentQuestion.id}`;
+
   return (
     <Card className="w-full shadow-xl border-border">
       <CardHeader>
         <CardTitle className="text-xl sm:text-2xl text-primary">Question {currentQuestionIndex + 1} <span className="text-muted-foreground font-normal">/ {quizData.length}</span></CardTitle>
-        <p className="text-lg sm:text-xl mt-3 text-foreground">{currentQuestion.text}</p>
+        <h2 ref={questionTextRef} id={questionId} tabIndex={-1} className="text-xl sm:text-2xl font-semibold mt-4 text-foreground">
+          {currentQuestion.text}
+        </h2>
       </CardHeader>
       <CardContent>
         <RadioGroup
+          ref={radioGroupRef}
+          aria-labelledby={questionId}
           value={selectedOptionValue}
           onValueChange={handleOptionChange}
           disabled={showFeedback}
@@ -114,16 +137,16 @@ const Quiz: NextPage = () => {
                     "flex items-center space-x-3 p-3 border rounded-md transition-all",
                     "hover:bg-accent/50",
                     selectedOptionValue === index.toString() && !showFeedback ? "border-primary ring-2 ring-primary" : "border-input",
-                    showFeedback && option.isCorrect ? "bg-success/20 border-success text-success" : "", // Style correct answer after feedback
-                    showFeedback && !option.isCorrect && selectedOptionValue === index.toString() ? "bg-destructive/20 border-destructive text-destructive" : "" // Style selected incorrect answer
+                    showFeedback && option.isCorrect ? "bg-success/20 border-success text-success-foreground" : "", 
+                    showFeedback && !option.isCorrect && selectedOptionValue === index.toString() ? "bg-destructive/20 border-destructive text-destructive-foreground" : "" 
                  )}
             >
               <RadioGroupItem 
                 value={index.toString()} 
                 id={`option-${currentQuestion.id}-${index}`}
                 className={cn(
-                    showFeedback && option.isCorrect ? "border-success text-success" : "",
-                    showFeedback && !option.isCorrect && selectedOptionValue === index.toString() ? "border-destructive text-destructive" : ""
+                    showFeedback && option.isCorrect ? "border-success text-success checked:bg-success checked:text-success-foreground" : "",
+                    showFeedback && !option.isCorrect && selectedOptionValue === index.toString() ? "border-destructive text-destructive checked:bg-destructive checked:text-destructive-foreground" : ""
                 )}
               />
               <Label htmlFor={`option-${currentQuestion.id}-${index}`} className="text-base sm:text-lg cursor-pointer flex-1">
@@ -165,3 +188,5 @@ const Quiz: NextPage = () => {
 };
 
 export default Quiz;
+
+    
